@@ -5,6 +5,7 @@ Tài liệu này là cẩm nang chi tiết kết hợp chuẩn mực **Quy trìn
 ---
 
 ## Mục Lục Tổng Quan 7 Giai Đoạn
+
 1. [1. Data (Dữ liệu)](#1-data-dữ-liệu)
 2. [2. Features (Đặc trưng & Tiền xử lý)](#2-features-đặc-trưng--tiền-xử-lý)
 3. [3. Model (Lựa chọn thuật toán mô hình)](#3-model-lựa-chọn-thuật-toán-mô-hình)
@@ -18,26 +19,43 @@ Tài liệu này là cẩm nang chi tiết kết hợp chuẩn mực **Quy trìn
 # 1. Data (Dữ liệu)
 
 ### 1.1. Mục tiêu & Nhiệm vụ
+
 - **Thu thập dữ liệu:** Tải các file dữ liệu từ cuộc thi Titanic của Kaggle gồm:
+
   - `train.csv`: Tập dữ liệu huấn luyện có sẵn kết quả nhãn `Survived` (0 = Mất, 1 = Sống sót).
+
   - `test.csv`: Tập dữ liệu kiểm thử thực tế cần dự đoán kết quả `Survived`.
+
   - `gender_submission.csv`: File mẫu nộp bài chuẩn của Kaggle.
+
 - **Khám phá dữ liệu (EDA - Exploratory Data Analysis):** Tìm hiểu ý nghĩa từng cột đặc trưng (Feature):
+
   - `Pclass`: Hạng vé (1 = Hạng nhất, 2 = Hạng nhì, 3 = Hạng phổ thông).
+
   - `Sex`: Giới tính (male, female).
+
   - `Age`: Độ tuổi hành khách.
+
   - `SibSp`: Số anh chị em / vợ chồng cùng đi trên tàu.
+
   - `Parch`: Số bố mẹ / con cái cùng đi trên tàu.
+
   - `Ticket`: Mã vé.
+
   - `Fare`: Giá vé.
+
   - `Cabin`: Số hiệu buồng phòng.
+
   - `Embarked`: Cảng lên tàu (C = Cherbourg, Q = Queenstown, S = Southampton).
+
 - **Phát hiện vấn đề (Data Quality Issues):**
+
   - Nhận diện các giá trị khuyết thiếu (`Missing Values / NaN`), đặc biệt là ở các cột `Age` (~20% thiếu), `Cabin` (>77% thiếu) và `Embarked` (2 mẫu thiếu).
 
 ### 1.2. Code Triển Khai Trong Notebook
 
 #### **Code Cell 1: Khởi tạo môi trường & Tải dữ liệu**
+
 ```python
 import pandas as pd
 import numpy as np
@@ -65,6 +83,7 @@ display(train_df.head())
 ```
 
 #### **Code Cell 2: Khám phá phân phối & Phát hiện dữ liệu khuyết (Missing Values)**
+
 ```python
 # 1. Thống kê dữ liệu khuyết
 print("--- Dữ liệu khuyết ở tập Train ---")
@@ -114,22 +133,35 @@ plt.show()
 # 2. Features (Đặc trưng & Tiền xử lý)
 
 ### 2.1. Mục tiêu & Phương pháp
+
 - **Feature Engineering (Tạo đặc trưng mới):**
+
   - **Danh xưng (Title):** Trích xuất từ cột `Name` (Mr, Mrs, Miss, Master...). Giúp phản ánh cả địa vị xã hội lẫn tuổi tác (ví dụ: "Master" là các bé trai).
+
   - **Kích thước gia đình (FamilySize):** Tính bằng `SibSp + Parch + 1` (tính cả bản thân hành khách).
+
   - **Phân nhóm gia đình (Family_category):** Chia thành các nhóm `Single`, `Small`, `Medium`, `Large` vì gia đình nhỏ thường dễ thoát hiểm cùng nhau hơn gia đình quá đông hoặc đi một mình.
+
 - **Xử lý dữ liệu thiếu (Imputation):**
+
   - Điền khuyết cột `Age` theo trung vị (`median`) của từng nhóm kết hợp `[Sex, Pclass]` để đảm bảo tính thực tế.
+
   - Điền `Embarked` bằng giá trị xuất hiện nhiều nhất (`most_frequent`).
+
   - Điền `Fare` (ở tập Test có 1 hành khách bị thiếu) bằng trung vị (`median`).
+
 - **Mã hóa (Encoding) & Chuẩn hóa (Scaling):**
+
   - Mã hóa biến phân loại bằng `OneHotEncoder`.
+
   - Chuẩn hóa các cột số (`Age`, `Fare`) bằng `StandardScaler`.
+
 - **Loại bỏ đặc trưng thừa (Feature Selection):** Loại bỏ `Cabin` (quá nhiều missing), `Ticket` (quá nhiều giá trị rời rạc), và `Name` (sau khi đã trích xuất `Title`).
 
 ### 2.2. Code Triển Khai Trong Notebook
 
 #### **Code Cell 3: Trích xuất đặc trưng mới & Điền khuyết nhóm**
+
 ```python
 # 1. Hàm trích xuất Danh xưng (Title) từ Name
 def extract_title(name):
@@ -149,11 +181,11 @@ def group_titles(title):
 for df in [train_df, test_df]:
     # Trích xuất Title
     df["Title"] = df["Name"].apply(extract_title).apply(group_titles)
-    
+
     # Tạo FamilySize và Family_category
     df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
-    df["Family_category"] = pd.cut(df["FamilySize"], 
-                                   bins=[0, 1, 4, 6, 20], 
+    df["Family_category"] = pd.cut(df["FamilySize"],
+                                   bins=[0, 1, 4, 6, 20],
                                    labels=["Single", "Small", "Medium", "Large"])
 
 # 2. Điền khuyết cột Age dựa trên trung vị của nhóm Sex và Pclass
@@ -165,6 +197,7 @@ display(train_df[['Name', 'Title', 'FamilySize', 'Family_category', 'Age']].head
 ```
 
 #### **Code Cell 4: Xây dựng Scikit-Learn Pipeline tự động hóa**
+
 ```python
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -207,20 +240,33 @@ print("Preprocessor Pipeline đã sẵn sàng!")
 # 3. Model (Lựa chọn thuật toán mô hình)
 
 ### 3.1. Bản chất bài toán
+
 - Bài toán Titanic là bài toán **Phân loại nhị phân (Binary Classification)**: Đầu ra là xác suất hành khách thuộc lớp `1` (Sống sót) hay `0` (Tử nạn).
 
 ### 3.2. Tập hợp các thuật toán khảo sát
+
 Chúng ta khảo sát phổ rộng từ các mô hình truyền thống tới các thuật toán Ensemble tân tiến:
+
 - **Nhóm Cơ bản:**
+
   - `Logistic Regression`: Nhanh, trực quan, giải thích xác suất tốt.
+
   - `K-Nearest Neighbors (KNN)`: Dựa trên khoảng cách lân cận.
+
   - `Decision Tree`: Phân nhánh theo quy tắc if-else.
+
 - **Nhóm Nâng cao (Ensemble & Boosting):**
+
   - `Random Forest`: Tập hợp nhiều cây quyết định độc lập, giảm phương sai (variance).
+
   - `Gradient Boosting Classifier`: Tối ưu phần dư theo từng vòng lặp.
+
   - `Extra Trees Classifier`: Cực tiểu hóa tương quan giữa các cây.
+
   - `AdaBoost Classifier`: Tập trung vào các mẫu dữ liệu dự đoán sai.
+
   - `XGBoost Classifier`: Thuật toán Gradient Boosting tối ưu hóa cao độ, dẫn đầu các cuộc thi Kaggle.
+
   - `Support Vector Machines (SVC)`: Tìm siêu phẳng phân tách tối ưu.
 
 ---
@@ -228,12 +274,15 @@ Chúng ta khảo sát phổ rộng từ các mô hình truyền thống tới c�
 # 4. Training (Huấn luyện & Tối ưu tham số)
 
 ### 4.1. Chiến lược chống Overfitting & Rò rỉ dữ liệu (Data Leakage)
+
 - Sử dụng **Stratified 5-Fold Cross Validation**: Đảm bảo tỉ lệ nhãn `0` và `1` đồng đều giữa các fold.
+
 - **Đóng gói Preprocessor vào Pipeline**: Dữ liệu validation chỉ được chuyển đổi dựa trên thông số tính toán từ fold huấn luyện của chính nó.
 
 ### 4.2. Code Triển Khai Trong Notebook
 
 #### **Code Cell 5: Huấn luyện so sánh các mô hình cơ sở (Baseline Comparison)**
+
 ```python
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.svm import LinearSVC, SVC
@@ -241,9 +290,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import (
-    RandomForestClassifier, 
-    GradientBoostingClassifier, 
-    ExtraTreesClassifier, 
+    RandomForestClassifier,
+    GradientBoostingClassifier,
+    ExtraTreesClassifier,
     AdaBoostClassifier
 )
 from xgboost import XGBClassifier
@@ -293,6 +342,7 @@ display(summary)
 ```
 
 #### **Code Cell 6: Tinh chỉnh siêu tham số (Hyperparameter Tuning với GridSearchCV)**
+
 Sau khi khảo sát, ta chọn ra 2 thuật toán mạnh mẽ nhất là `Random Forest` và `XGBoost` để tinh chỉnh:
 ```python
 from sklearn.model_selection import GridSearchCV
@@ -341,14 +391,19 @@ print(f"Best XGBoost CV Score: {grid_xgb.best_score_:.4f}")
 # 5. Evaluation (Đánh giá & Diễn giải mô hình)
 
 ### 5.1. Tiêu chí đánh giá toàn diện
+
 - **Accuracy (Độ chính xác):** Tỉ lệ dự đoán đúng trên toàn bộ tập dữ liệu (thang đo chính của Kaggle Titanic).
+
 - **Precision (Độ chuẩn xác), Recall (Độ bao phủ) & F1-Score:** Đảm bảo mô hình không dự đoán thiên lệch về một lớp khi mẫu sống sót chiếm tỉ lệ ít hơn.
+
 - **Confusion Matrix:** Nhìn rõ số trường hợp False Positive và False Negative.
+
 - **Feature Importance (Độ quan trọng của đặc trưng):** Giải thích quyết định của mô hình (Explainable AI).
 
 ### 5.2. Code Triển Khai Trong Notebook
 
 #### **Code Cell 7: Đánh giá chi tiết qua Confusion Matrix & Classification Report**
+
 ```python
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import classification_report, confusion_matrix
@@ -364,14 +419,15 @@ print(classification_report(y, y_pred_cv, target_names=['Mất (0)', 'Sống (1)
 # Vẽ ma trận nhầm lẫn (Confusion Matrix)
 cm = confusion_matrix(y, y_pred_cv)
 plt.figure(figsize=(5, 4))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=['Dự đoán Mất', 'Dự đoán Sống'], 
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=['Dự đoán Mất', 'Dự đoán Sống'],
             yticklabels=['Thực tế Mất', 'Thực tế Sống'])
 plt.title('Ma Trận Nhầm Lẫn (Confusion Matrix)')
 plt.show()
 ```
 
 #### **Code Cell 8: Phân tích độ quan trọng của đặc trưng (Feature Importance)**
+
 ```python
 # Lấy mô hình classifier bên trong pipeline tốt nhất
 trained_rf_model = best_rf.named_steps['model']
@@ -390,6 +446,7 @@ plt.show()
 ```
 
 #### **Code Cell 9: Xây dựng Mô hình kết hợp (Voting Classifier Ensemble)**
+
 ```python
 from sklearn.ensemble import VotingClassifier
 
@@ -418,12 +475,15 @@ print(f"Ensemble Voting CV Accuracy: {ensemble_scores.mean():.4f} (+/- {ensemble
 # 6. Prediction (Dự đoán trên tập Test & Xuất kết quả)
 
 ### 6.1. Quy tắc cốt lõi
+
 - Tập `test.csv` phải đi qua cùng một Pipeline tiền xử lý đã fit trên tập Train để tránh mọi sai lệch định dạng.
+
 - Đầu ra phải là định dạng 2 cột: `PassengerId` và `Survived`.
 
 ### 6.2. Code Triển Khai Trong Notebook
 
 #### **Code Cell 10: Huấn luyện toàn bộ dữ liệu & Xuất file nộp bài Kaggle**
+
 ```python
 # Huấn luyện mô hình Voting cuối cùng trên 100% dữ liệu Train (X, y)
 ensemble_voting.fit(X, y)
@@ -450,6 +510,7 @@ display(submission_df.head(10))
 # 7. Deployment (Triển khai Web App & Kaggle Submission)
 
 ### 7.1. Triển khai cấp độ 1: Nộp bài lên Kaggle
+
 1. Đăng nhập vào trang cuộc thi [Kaggle Titanic Competition](https://www.kaggle.com/c/titanic).
 2. Nhấn nút **Submit Predictions**.
 3. Tải file `submission.csv` vừa tạo lên.
@@ -458,9 +519,11 @@ display(submission_df.head(10))
 ---
 
 ### 7.2. Triển khai cấp độ 2: Lưu mô hình (Model Persistence)
+
 Để phục vụ cho ứng dụng thực tế hoặc web app, ta đóng gói và lưu mô hình vào file `.pkl` bằng thư viện `joblib`.
 
 #### **Code Cell 11: Lưu mô hình xuống ổ đĩa**
+
 ```python
 import joblib
 
@@ -472,9 +535,11 @@ print(" Đã lưu mô hình thành công vào file: titanic_model_pipeline.pkl")
 ---
 
 ### 7.3. Triển khai cấp độ 3: Ứng dụng Web App dự đoán tương tác với Streamlit
+
 Tạo một file có tên `app.py`. Người dùng có thể tự nhập thông tin cá nhân và xem hệ thống tính toán xác suất sống sót theo thời gian thực.
 
 #### **Mã nguồn file `app.py`:**
+
 ```python
 import streamlit as st
 import pandas as pd
@@ -504,20 +569,20 @@ st.markdown("Nhập các thông số hành khách dưới đây để mô hình 
 # Giao diện nhập dữ liệu người dùng
 with st.form("prediction_form"):
     col1, col2 = st.columns(2)
-    
+
     with col1:
         pclass = st.selectbox("Hạng vé (Pclass):", options=[1, 2, 3], format_func=lambda x: f"Hạng {x}")
         sex = st.selectbox("Giới tính (Sex):", options=["male", "female"], format_func=lambda x: "Nam" if x == "male" else "Nữ")
         age = st.slider("Tuổi (Age):", min_value=1, max_value=85, value=28)
         title = st.selectbox("Danh xưng (Title):", options=["Mr", "Miss", "Mrs", "Master", "Other"])
-        
+
     with col2:
         fare = st.number_input("Giá vé (Fare, £):", min_value=0.0, max_value=600.0, value=32.0, step=1.0)
-        embarked = st.selectbox("Cảng lên tàu (Embarked):", options=["S", "C", "Q"], 
+        embarked = st.selectbox("Cảng lên tàu (Embarked):", options=["S", "C", "Q"],
                                 format_func=lambda x: {"S": "Southampton", "C": "Cherbourg", "Q": "Queenstown"}[x])
         sibsp = st.number_input("Số anh/chị/em/vợ/chồng (SibSp):", min_value=0, max_value=10, value=0)
         parch = st.number_input("Số cha/mẹ/con cái (Parch):", min_value=0, max_value=10, value=0)
-        
+
     submitted = st.form_submit_button("🚀 Dự Đoán Ngay", use_container_width=True)
 
 if submitted:
@@ -542,12 +607,12 @@ if submitted:
         'Title': title,
         'Family_category': family_cat
     }])
-    
+
     # Dự đoán kết quả & xác suất
     prediction = model.predict(input_data)[0]
     probabilities = model.predict_proba(input_data)[0]
     survival_prob = probabilities[1] * 100
-    
+
     st.divider()
     if prediction == 1:
         st.success(f"🎉 **Kết quả: CÓ KHẢ NĂNG SỐNG SÓT!**")
@@ -559,6 +624,7 @@ if submitted:
 ```
 
 #### **Cách chạy Web App:**
+
 Trong terminal, bạn cài đặt Streamlit (nếu chưa có) và khởi chạy:
 ```bash
 pip install streamlit
@@ -578,5 +644,8 @@ streamlit run app.py
 | **5** | **Evaluation** | Confusion Matrix, Precision, Recall, Feature Importance | Đánh giá độ tin cậy và lý giải mô hình |
 | **6** | **Prediction** | Ensemble Soft Voting Classifier | File `submission.csv` nộp Kaggle |
 | **7** | **Deployment** | Kaggle Leaderboard, Joblib, Streamlit Web App | Ứng dụng web tương tác thực tế |
-#   T i t a n i c - - - M a c h i n e - L e a r n i n g - f r o m - D i s a s t e r  
+
+#   T i t a n i c - - - M a c h i n e - L e a r n i n g - f r o m - D i s a s t e r 
+
+ 
  
