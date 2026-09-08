@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Kế Hoạch Toàn Diện Dự Án Machine Learning: Titanic Survival Prediction
 
 Tài liệu này là cẩm nang chi tiết kết hợp chuẩn mực **Quy trình 7 bước phát triển Machine Learning (End-to-End ML Lifecycle)** cùng toàn bộ **Code Python thực thi hoàn chỉnh** trong Jupyter Notebook và ứng dụng thực tế.
