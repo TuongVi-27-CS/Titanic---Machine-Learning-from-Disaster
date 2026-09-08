@@ -142,7 +142,7 @@ HTML_TEMPLATE = """
         </div>
 
         <!-- CỘT PHẢI: HIỂN THỊ KẾT QUẢ (5 phần) -->
-        <div class="md:col-span-5 bg-black/20 p-6 sm:p-8 flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/5">
+        <div class="md:col-span-5 bg-black/20 p-6 sm:p-8 flex flex-col justify-center border-t md:border-t-0 md:border-l border-white/5">
             <div>
                 <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-brand-light animate-ping"></span>
